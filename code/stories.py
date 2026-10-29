@@ -145,3 +145,50 @@ if __name__ == "__main__":
         a()
         b()
         print("done", day)
+
+
+def info_story(name, tag_label, title, lines, cta, tag_color=CYAN, quote=False):
+    img = background().copy()
+    brand_chip(img)
+    tag(img, tag_label, color=tag_color)
+    h = text(img, title, "pb", 80, 80, 450, 920, spacing=1.14)
+    y = 450 + h + 70
+    if quote:
+        box(img, 100, y, 880, 560, r=40, fill=CARD, outline=STROKE, width=2)
+        text(img, "“", "pb", 160, 140, y - 10, 200, color=CYAN, align="left")
+        qh = text(img, lines[0], "im", 42, 150, y + 130, 780, align="left", spacing=1.3)
+        text(img, lines[1], "isb", 36, 150, y + 150 + qh, 780, color=CYAN, align="left")
+    else:
+        for ln in lines:
+            box(img, 110, y, 860, 130, r=36, fill=CARD, outline=STROKE, width=2)
+            paste(img, emoji("✅", 64), 150, y + 33)
+            text(img, ln, "isb", 42, 250, y + 40, 690, align="left")
+            y += 158
+    w = int(text_w(cta, "pb", 46)) + 100
+    box(img, (W - w) / 2, 1460, w, 110, r=55, fill=CYAN, outline=None, width=0)
+    text(img, cta, "pb", 46, (W - w) / 2, 1484, w, color=DARK)
+    img.save(f"stories/{name}.png")
+
+
+def extra_days():
+    reminder_story("29", "orca_reels_01_trader_sinyal",
+                   "Sinyal gece geldi,\n**bot işlemi açtı**", "BOT")
+    import os
+    os.replace("stories/story_29_b.png", "stories/story_1029_b.png")
+    reaction_story("1030", "Hangi iş için **yazılım** lazım?",
+                   [("😍", "Trade botu"), ("🔥", "Web sitesi ve Google"),
+                    ("💯", "AI asistan")])
+    info_story("story_1030_b", "BİZ KİMİZ", "**ORCA Software**",
+               ["2020'den beri", "20+ tamamlanan proje", "Türkiye geneli, uzaktan"],
+               "DM'e TEKLİF yaz")
+    dm_story("1031", "Sinyalini hâlâ **elle mi** açıyorsun?",
+             "Evet ya da hayır yaz.\nEvet ise otomatiğe nasıl\nbağlanır anlatalım.")
+    info_story("story_1031_b", "MÜŞTERİMİZ NE DİYOR", "Gerçek proje:\n**RobotX**",
+               ["TradingView indikatör sinyallerimi Telegram kanalıma ve üyelerimin "
+                "Binance hesaplarına otomatik ileten üyelik panelini tam istediğim gibi "
+                "kurdular.", "Aydın Hoca"], "DM'e BOT yaz", tag_color=GREEN, quote=True)
+    reaction_story("1101", "Yazılım yaptırırken en çok **neden çekinirsin?**",
+                   [("😢", "Fiyat"), ("😮", "Ne kadar süreceği"), ("🔥", "Güvenilir firma")])
+    info_story("story_1101_b", "PAZARTESİ BAŞLIYORUZ", "**7 gün, 7 video**",
+               ["Google Maps ve web sitesi", "Trade botları", "AI asistan ve otomasyon"],
+               "Takip et, kaçırma")
