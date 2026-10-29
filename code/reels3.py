@@ -203,6 +203,69 @@ def r11(img, t, cues):
 REELS = {9: (r9, "orca_reels_09_ai_telegram_bot"), 10: (r10, "orca_reels_10_genel_uygulama"),
          11: (r11, "orca_reels_11_genel_crm")}
 
+# ============================================================ Reel 12: indicator -> automation
+reels2.LINES[12] = [
+    "TradingView'da kendi indikatörün var ama işlemleri hâlâ elle mi açıyorsun?",
+    "Üç adımda otomatiğe bağlanır.",
+    "Bir: İndikatöründe alarm koşulunu netleştir, al ve sat sinyali ayrı olsun.",
+    "İki: Alarmı webhook ile bota gönder.",
+    "Üç: Bot sinyali okur, borsada emri açar ve sana Telegram'dan haber verir.",
+    "İndikatörünü otomatiğe bağlamak için DM'den BOT yaz."]
+
+S12 = [("Alarm koşulunu netleştir", "Al ve sat sinyali ayrı olsun", BLUE, "Alarm"),
+       ("Webhook ile bota gönder", "TradingView → ORCA Bot", CYAN, "Webhook"),
+       ("Bot emri açar", "Borsada işlem + Telegram bildirimi", GREEN, "Emir")]
+
+
+def r12(img, t, cues):
+    i, s = scene_at(t, cues)
+    if i == 0:
+        headline(img, "İndikatörün var,\n**işlemler hâlâ elle mi?**", t, 0, first=True)
+        box(img, 80, 620, 920, 640, r=40, fill=CARD, outline=STROKE, width=2)
+        text(img, "BTCUSDT · Senin indikatörün", "isb", 32, 120, 650, 800, align="left")
+        d = ImageDraw.Draw(img)
+        import math
+        pts = [(140 + k * 40, 1000 - 180 * math.sin(k / 3.2) - k * 6) for k in range(20)]
+        d.line(pts, fill=(148, 163, 184), width=6, joint="curve")
+        for k, lab, col in [(3, "AL", GREEN), (12, "SAT", RED), (18, "AL", GREEN)]:
+            x, y = pts[k]
+            box(img, x - 45, y + (40 if lab == "AL" else -100), 90, 56, r=16, fill=col,
+                outline=None, width=0)
+            text(img, lab, "ib", 28, x - 45, y + (52 if lab == "AL" else -88), 90, color=DARK)
+        pc = prog(t, 1.2, 0.4)
+        box(img, 280, 1300, 520, 90, r=45, fill=(70, 20, 28), outline=RED, width=3, alpha=pc)
+        text(img, "Her sinyalde elle işlem", "isb", 34, 280, 1322, 520, alpha=pc)
+    elif i == 1:
+        headline(img, "**3 adımda** otomatik", t, s)
+        p = prog(t, s + 0.1, 0.4)
+        text(img, "3", "pb", 420, 80, 560 + (1 - p) * 40, 920, color=CYAN, alpha=p)
+    elif i <= 4:
+        a, b, col, _ = S12[i - 2]
+        headline(img, f"**Adım {i - 1}**", t, s)
+        for k, (ha, hb, hc, short) in enumerate(S12):
+            y = 600 + k * 250
+            active = k == i - 2
+            done = k < i - 2
+            p = prog(t, s, 0.4) if active else 1.0
+            box(img, 80, y, 920, 210, r=40, fill=CARD if active else (14, 20, 38),
+                outline=hc if active else STROKE, width=3 if active else 2,
+                alpha=1.0 if (active or done) else 0.45)
+            ic = check_icon(100) if done else circle_icon(100, hc if active else CARD2,
+                                                         str(k + 1), 44,
+                                                         DARK if active else MUTED)
+            paste(img, ic, 120, y + 55, 1.0 if (active or done) else 0.45)
+            text(img, ha, "pb" if active else "isb", 44, 260, y + 50, 700, align="left",
+                 color=WHITE if (active or done) else MUTED, alpha=1.0)
+            if active:
+                text(img, hb, "im", 34, 260, y + 120, 700, color=MUTED, align="left", alpha=p)
+    else:
+        cta_scene(img, t, s, "İndikatörünü\n**otomatiğe bağla**", "DM'den yaz:", "BOT",
+                  "Ücretsiz analiz")
+
+
+REELS[12] = (r12, "orca_reels_12_trader_indikator")
+
+
 if __name__ == "__main__":
     which = sys.argv[1]
     ids = list(REELS) if which == "all" else [int(which)]
