@@ -266,6 +266,55 @@ def r12(img, t, cues):
 REELS[12] = (r12, "orca_reels_12_trader_indikator")
 
 
+
+
+# ============================================================ Reel 13: AI or fall behind
+reels2.LINES[13] = [
+    "Rakibin müşterisine gece de cevap veriyor. Sen sabahı bekliyorsun.",
+    "Yapay zekayı işine katmayan işletmeler geride kalıyor.",
+    "Senin işine uygun yapay zekayı kuralım. DM'den AI yaz."]
+
+
+def r13(img, t, cues):
+    i, s = scene_at(t, cues)
+    if i == 0:
+        headline(img, "Rakibin **gece de** cevap veriyor.\nSen sabahı bekliyorsun.", t, 0,
+                 first=True, size=64)
+        for k, (lab, sub, col, ok) in enumerate([("Rakip", "AI asistan · 03:07", GREEN, True),
+                                                 ("Sen", "Cevap yok · 09:42", RED, False)]):
+            x = 80 + k * 470
+            p = 1.0
+            box(img, x, 640, 450, 640, r=40, fill=CARD, outline=col, width=3, alpha=p)
+            text(img, lab, "pb", 56, x, 690, 450, alpha=p)
+            ic = check_icon(160) if ok else circle_icon(160, RED, "X", 70)
+            paste(img, ic, x + 145, 820, p)
+            text(img, sub, "isb", 32, x, 1030, 450, color=col, alpha=p)
+            text(img, "Müşteri kazandı" if ok else "Müşteri gitti", "im", 32, x, 1100, 450,
+                 color=MUTED, alpha=p)
+    elif i == 1:
+        headline(img, "AI kullanmayan işletmeler\n**geride kalıyor.**", t, s, size=68)
+        d = ImageDraw.Draw(img)
+        x0, y0, x1, y1 = 140, 650, 940, 1250
+        d.line([(x0, y1), (x1, y1)], fill=STROKE, width=4)
+        p = prog(t, s + 0.2, 2.0)
+        n = 30
+        import math
+        up = [(x0 + (x1 - x0) * k / n, y1 - 40 - 520 * (k / n) ** 1.6) for k in range(n + 1)]
+        fl = [(x0 + (x1 - x0) * k / n, y1 - 40 - 140 * (k / n)) for k in range(n + 1)]
+        m_ = max(2, int((n + 1) * p))
+        d.line(up[:m_], fill=GREEN, width=10, joint="curve")
+        d.line(fl[:m_], fill=RED, width=10, joint="curve")
+        if p > 0.95:
+            text(img, "AI kullanan", "isb", 34, 560, up[-1][1] - 70, 400, color=GREEN, align="right")
+            text(img, "Kullanmayan", "isb", 34, 560, fl[-1][1] - 70, 400, color=RED, align="right")
+    else:
+        cta_scene(img, t, s, "Senin işine uygun\n**yapay zekayı kuralım**", "DM'den yaz:", "AI",
+                  "Ücretsiz analiz")
+
+
+REELS[13] = (r13, "orca_reels_13_ai_geride_kalma")
+
+
 if __name__ == "__main__":
     which = sys.argv[1]
     ids = list(REELS) if which == "all" else [int(which)]
