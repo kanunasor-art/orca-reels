@@ -17,7 +17,8 @@ INTER = "/usr/share/fonts/opentype/inter/Inter-SemiBold.otf"
 RED, BLUE, WHITE = (229, 57, 53), (66, 165, 245), (236, 239, 241)
 MUT, BG = (120, 130, 150), (13, 14, 20)
 FREEZE = 4.6
-DUR = 19.0
+VO_START = 5.2
+DUR = 18.0
 
 
 def F(size, f=OSW):
@@ -131,14 +132,22 @@ def hud(img, t):
            fill=RED if sab < 1.2 else (255, 202, 40))
 
 
-# word-by-word captions: (start, end, text, highlight words)
-CAPS = [(0.0, 1.4, "BİR ZİYARETÇİ", []), (1.4, 2.6, "SATIN ALMAK", ["SATIN"]),
-        (2.6, 4.6, "ÜZERE", []),
-        (5.2, 6.1, "AMA", []), (6.1, 7.2, "SİTEN", ["SİTEN"]),
-        (7.2, 8.4, "3 SANİYEDİR", ["3"]), (8.4, 9.6, "AÇILMIYOR.", ["AÇILMIYOR."]),
-        (9.8, 11.0, "ZİYARETÇİLERİN", []), (11.0, 12.2, "YARISI", ["YARISI"]),
-        (12.2, 13.6, "TAM BURADA GİDİYOR.", ["GİDİYOR."]),
-        (14.0, 15.0, "HIZLI", ["HIZLI"]), (15.0, 16.2, "GÜÇLÜ TASARIM", ["TASARIM"])]
+# word-by-word captions; post-freeze groups are timed to real pauses in vo15.mp3
+import reels2
+reels2.LINES[15] = ["Ama siten üç saniyedir açılmıyor.", "Ziyaretçilerin yarısı tam burada gidiyor.",
+                    "Hızlı ve güçlü tasarım satış getirir.", "Siteni ücretsiz inceleyelim. DM'den WEB yaz."]
+_c, _d = reels2.cues_for(15)
+_c = [VO_START + x for x in _c] + [VO_START + _d]
+GROUPS = [[("AMA", []), ("SİTEN", ["SİTEN"]), ("3 SANİYEDİR", ["3"]), ("AÇILMIYOR.", ["AÇILMIYOR."])],
+          [("ZİYARETÇİLERİN", []), ("YARISI", ["YARISI"]), ("TAM BURADA GİDİYOR.", ["GİDİYOR."])],
+          [("HIZLI VE", ["HIZLI"]), ("GÜÇLÜ TASARIM", ["TASARIM"]), ("SATIŞ GETİRİR.", ["SATIŞ"])]]
+CAPS = [(0.0, 1.4, "BİR ZİYARETÇİ", []), (1.4, 2.6, "SATIN ALMAK", ["SATIN"]), (2.6, 4.6, "ÜZERE", [])]
+for gi, g in enumerate(GROUPS):
+    a0, a1 = _c[gi], _c[gi + 1]
+    step = (a1 - a0) / len(g)
+    for k, (txt, hi) in enumerate(g):
+        CAPS.append((a0 + k * step, a0 + (k + 1) * step, txt, hi))
+CTA_AT = _c[3]
 
 
 def caption(img, t):
@@ -152,7 +161,7 @@ def caption(img, t):
             y = 1560 + (1 - p) * 16
             d = ImageDraw.Draw(img)
             for w in words:
-                col = (RED if w not in ("SİTEN", "HIZLI", "TASARIM") else BLUE) if w in hi else WHITE
+                col = (RED if w not in ("SİTEN", "HIZLI", "TASARIM", "SATIŞ") else BLUE) if w in hi else WHITE
                 d.text((x + 4, y + 5), w, font=f, fill=(0, 0, 0))
                 d.text((x, y), w, font=f, fill=col)
                 x += f.getlength(w + " ")
@@ -208,16 +217,16 @@ def scene(t):
             grey = g.mean(axis=2, keepdims=True)
             k = min(0.75, (dt - 0.3) * 1.5)
             img = Image.fromarray((g * (1 - k) + grey * k * 0.6).clip(0, 255).astype("uint8"))
-        if 9.8 <= t < 13.6:      # cursor gives up and leaves
+        if _c[1] <= t < _c[2]:      # cursor gives up and leaves
             img2 = img
-            lp = prog(t, 12.4, 1.0)
+            lp = prog(t, _c[2] - 1.0, 1.0)
             if lp > 0:
                 img2 = Image.blend(img, Image.new("RGB", (W, H), BG), lp * 0.5)
             img = img2
     hud(img, t)
     caption(img, t)
-    if t >= 16.4:
-        cta(img, t, 16.4)
+    if t >= CTA_AT:
+        cta(img, t, CTA_AT)
     return img
 
 
@@ -255,9 +264,9 @@ if __name__ == "__main__":
             scene(tt).save(f"stills/w15_{tt:04.1f}.png")
     else:
         cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
-               "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-i", "out/w15_sfx.wav",
+               "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-i", "out/w15_sfx.wav", "-i", "vo15.mp3",
                "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
-               "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart",
+               "-filter_complex", f"[2:a]adelay={int(VO_START*1000)}|{int(VO_START*1000)},apad[vo];[1:a][vo]amix=inputs=2:duration=first:normalize=0[a]", "-map", "0:v", "-map", "[a]", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart",
                "out/orca_reels_15_hook_web.mp4"]
         sfx("out/w15_sfx.wav")
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
